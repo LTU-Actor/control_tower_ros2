@@ -5,7 +5,7 @@ from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Int32
-from mqtt_wheel_bridge.msg import WheelControl
+from geometry_msgs.msg import Pose2D
 
 from control_tower_ros2.double_ackermann import DoubleAckermannSteering as da
 
@@ -54,10 +54,10 @@ class control_tower_node(Node):
         self.sub_ch8 = self.create_subscription(
             Int32, 'ch8', self.callback_8, 1)
         
-        self.frontleft_pub = self.create_publisher(WheelControl, "frontleft/control", 10)
-        self.frontright_pub = self.create_publisher(WheelControl, "frontright/control", 10)
-        self.backleft_pub = self.create_publisher(WheelControl, "backleft/control", 10)
-        self.backright_pub = self.create_publisher(WheelControl, "backright/control", 10)
+        self.frontleft_pub =  self.create_publisher(Pose2D, "frontleft/control", 10)
+        self.frontright_pub = self.create_publisher(Pose2D, "frontright/control", 10)
+        self.backleft_pub =   self.create_publisher(Pose2D, "backleft/control", 10)
+        self.backright_pub =  self.create_publisher(Pose2D, "backright/control", 10)
         
 
     # Define separate callback functions for each channel
@@ -138,19 +138,19 @@ class control_tower_node(Node):
         # self.get_logger().info(f"Published Switch States: {sw_msg.data}")
 
     def publish_wheels(self, vehicle : da):
-        frontleft_ctrl = WheelControl()
-        frontright_ctrl = WheelControl()
-        backleft_ctrl = WheelControl()
-        backright_ctrl = WheelControl()
+        frontleft_ctrl =  Pose2D()
+        frontright_ctrl = Pose2D()
+        backleft_ctrl =   Pose2D()
+        backright_ctrl =  Pose2D()
         
-        frontleft_ctrl.throttle =  vehicle.v_f_left
-        frontleft_ctrl.angle = vehicle.theta_f_left
-        frontright_ctrl.throttle =  vehicle.v_f_right
-        frontright_ctrl.angle = vehicle.theta_f_right
-        backleft_ctrl.throttle =  vehicle.v_r_left
-        backleft_ctrl.angle = vehicle.theta_r_left
-        backright_ctrl.throttle =  vehicle.v_r_right
-        backright_ctrl.angle = vehicle.theta_r_right
+        frontleft_ctrl.x =  vehicle.v_f_left
+        frontleft_ctrl.theta = vehicle.theta_f_left
+        frontright_ctrl.x =  vehicle.v_f_right
+        frontright_ctrl.theta = vehicle.theta_f_right
+        backleft_ctrl.x =  vehicle.v_r_left
+        backleft_ctrl.theta = vehicle.theta_r_left
+        backright_ctrl.x =  vehicle.v_r_right
+        backright_ctrl.theta = vehicle.theta_r_right
         
         self.frontleft_pub.publish(frontleft_ctrl)
         self.frontright_pub.publish(frontright_ctrl)
