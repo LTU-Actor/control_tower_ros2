@@ -82,21 +82,21 @@ class DoubleAckermannSteering:
             self.v_r_left = self.v
         else:
             # Steering angles
-            self.theta_f_right = turn_direction * \
-                np.arctan2(self.l, (self.r - self.w / 2))
-            self.theta_f_left = turn_direction * \
-                np.arctan2(self.l, (self.r + self.w / 2))
-            self.theta_r_right = -self.theta_f_right
-            self.theta_r_left = -self.theta_f_left
+            self.theta_f_right = float(turn_direction * \
+                np.arctan2(self.l, (self.r - self.w / 2)))
+            self.theta_f_left = float(turn_direction * \
+                np.arctan2(self.l, (self.r + self.w / 2)))
+            self.theta_r_right = float(-self.theta_f_right)
+            self.theta_r_left = float(-self.theta_f_left)
 
             # Angular velocity
             self.omega = self.v / self.r
 
             # Wheel velocities
-            self.v_f_right = self.omega * (self.r - self.w / 2)
-            self.v_f_left = self.omega * (self.r + self.w / 2)
-            self.v_r_right = self.v_f_right
-            self.v_r_left = self.v_f_left
+            self.v_f_right = float(self.omega * (self.r - self.w / 2))
+            self.v_f_left = float(self.omega * (self.r + self.w / 2))
+            self.v_r_right = float(self.v_f_right)
+            self.v_r_left = float(self.v_f_left)
 
     def display_results(self):
         """Prints computed steering angles and wheel velocities"""
