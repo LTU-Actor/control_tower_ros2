@@ -1,20 +1,17 @@
 import rclpy
+import numpy as np
 from rclpy.node import Node
+
 from std_msgs.msg import Int32MultiArray
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Int32
-import numpy as np
+from mqtt_wheel_bridge.msg import WheelControl
+
 from control_tower_ros2.double_ackermann import DoubleAckermannSteering as da
 
-from paho.mqtt import client as MQTT
 
 
 class control_tower_node(Node):
-    
-    mqtt_host = "192.168.0.3"
-    mqtt_port = 1883
-    mqtt_name = "controlTower"
-    mqtt_client : MQTT.Client
     
     def __init__(self):
         super().__init__('control_tower_node')
@@ -57,10 +54,11 @@ class control_tower_node(Node):
         self.sub_ch8 = self.create_subscription(
             Int32, 'ch8', self.callback_8, 1)
         
-        # set up MQTT client
-        self.mqtt_client = MQTT.Client(client_id=self.mqtt_name)
-        self.mqtt_client.connect(self.mqtt_host, self.mqtt_port)
-        self.mqtt_client.loop_start()
+        self.frontleft_pub = self.create_publisher(WheelControl, "frontleft/control", 10)
+        self.frontright_pub = self.create_publisher(WheelControl, "frontright/control", 10)
+        self.backleft_pub = self.create_publisher(WheelControl, "backleft/control", 10)
+        self.backright_pub = self.create_publisher(WheelControl, "backright/control", 10)
+        
 
     # Define separate callback functions for each channel
     def callback_1(self, msg): self.rx = msg.data
@@ -138,20 +136,30 @@ class control_tower_node(Node):
         self.switch_publisher_.publish(sw_msg)
         # Debugging
         # self.get_logger().info(f"Published Switch States: {sw_msg.data}")
-        
-    def publish_wheels(self, vehicle : da):
-        self.mqtt_client.publish("/frontleft/power", vehicle.v_f_left)
-        self.mqtt_client.publish("/frontleft/steer", vehicle.theta_f_left)
-        
-        self.mqtt_client.publish("/frontright/power", vehicle.v_f_right)
-        self.mqtt_client.publish("/frontright/steer", vehicle.theta_f_right)
-        
-        self.mqtt_client.publish("/backleft/power", vehicle.v_r_left)
-        self.mqtt_client.publish("/backleft/steer", vehicle.theta_r_left)
-        
-        self.mqtt_client.publish("/backright/power", vehicle.v_r_right)
-        self.mqtt_client.publish("/backright/steer", vehicle.theta_r_right)
 
+    def publish_wheels(self, vehicle : da):
+        frontleft_ctrl = WheelControl()
+        frontright_ctrl = WheelControl()
+        backleft_ctrl = WheelControl()
+        backright_ctrl = WheelControl()
+        
+        frontleft_ctrl.throttle =  vehicle.v_f_left
+        frontleft_ctrl.angle = vehicle.theta_f_left
+        frontright_ctrl.throttle =  vehicle.v_f_right
+        frontright_ctrl.angle = vehicle.theta_f_right
+        backleft_ctrl.throttle =  vehicle.v_r_left
+        backleft_ctrl.angle = vehicle.theta_r_left
+        backright_ctrl.throttle =  vehicle.v_r_right
+        backright_ctrl.angle = vehicle.theta_r_right
+        
+        self.frontleft_pub.publish(frontleft_ctrl)
+        self.frontright_pub.publish(frontright_ctrl)
+        self.backleft_pub.publish(backleft_ctrl)
+        self.backright_pub.publish(backright_ctrl)
+        
+        
+            
+            
 
 def main(args=None):
     rclpy.init(args=args)
