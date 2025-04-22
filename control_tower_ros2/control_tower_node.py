@@ -143,14 +143,14 @@ class control_tower_node(Node):
         backleft_ctrl =   Point()
         backright_ctrl =  Point()
         
-        frontleft_ctrl.x =  vehicle.v_f_left
-        frontleft_ctrl.z = vehicle.theta_f_left
-        frontright_ctrl.x =  vehicle.v_f_right
-        frontright_ctrl.z = vehicle.theta_f_right
-        backleft_ctrl.x =  vehicle.v_r_left
-        backleft_ctrl.z = vehicle.theta_r_left
-        backright_ctrl.x =  vehicle.v_r_right
-        backright_ctrl.z = vehicle.theta_r_right
+        frontleft_ctrl.x =  vehicle.v_f_left      * 1.0
+        frontleft_ctrl.z = vehicle.theta_f_left * 1.0
+        frontright_ctrl.x =  vehicle.v_f_right * 1.0
+        frontright_ctrl.z = vehicle.theta_f_right * 1.0
+        backleft_ctrl.x =  vehicle.v_r_left * 1.0
+        backleft_ctrl.z = vehicle.theta_r_left * 1.0
+        backright_ctrl.x =  vehicle.v_r_right * 1.0
+        backright_ctrl.z = vehicle.theta_r_right * 1.0
         
         self.frontleft_pub.publish(frontleft_ctrl)
         self.frontright_pub.publish(frontright_ctrl)
