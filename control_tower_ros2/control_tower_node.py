@@ -5,7 +5,7 @@ from rclpy.node import Node
 from std_msgs.msg import Int32MultiArray
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Int32
-from geometry_msgs.msg import Pose2D
+from geometry_msgs.msg import Point
 
 from control_tower_ros2.double_ackermann import DoubleAckermannSteering as da
 
@@ -54,10 +54,10 @@ class control_tower_node(Node):
         self.sub_ch8 = self.create_subscription(
             Int32, 'ch8', self.callback_8, 1)
         
-        self.frontleft_pub =  self.create_publisher(Pose2D, "frontleft/control", 10)
-        self.frontright_pub = self.create_publisher(Pose2D, "frontright/control", 10)
-        self.backleft_pub =   self.create_publisher(Pose2D, "backleft/control", 10)
-        self.backright_pub =  self.create_publisher(Pose2D, "backright/control", 10)
+        self.frontleft_pub =  self.create_publisher(Point, "frontleft/control", 10)
+        self.frontright_pub = self.create_publisher(Point, "frontright/control", 10)
+        self.backleft_pub =   self.create_publisher(Point, "backleft/control", 10)
+        self.backright_pub =  self.create_publisher(Point, "backright/control", 10)
         
 
     # Define separate callback functions for each channel
@@ -84,7 +84,7 @@ class control_tower_node(Node):
         # 0: double Ackermann, 1: Fixed Heading, 2: edu-bot test mode
         self.drive_mode = self.sw_c
 
-        if self.drive_mode == 0:
+        if self.drive_mode == 2000:
             # Double Ackermann
             # L: Length (m), W: Width (m), max_speed: max speed (max speed is not used in the current implementation)
             vehicle = da(self.lx, self.ly)
@@ -103,10 +103,10 @@ class control_tower_node(Node):
             # self.get_logger().info(f"Published Wheel Angles: {vehicle.theta_f_left}, {vehicle.theta_f_right}, {vehicle.theta_r_left}, {vehicle.theta_r_right}")
             # self.get_logger().info(f"Published Wheel Velocities: {vehicle.v_f_left}, {vehicle.v_f_right}, {vehicle.v_r_left}, {vehicle.v_r_right}")
 
-        elif self.drive_mode == 1:
+        elif self.drive_mode == 1500:
             # Fixed Heading
             pass
-        elif self.drive_mode == 2:
+        elif self.drive_mode == 1000:
             # edu-bot test mode
             input_range = np.array([1000, 1450, 1550, 2000])
             linear_output_range = np.array([-10, 0, 0, 10])
@@ -138,19 +138,19 @@ class control_tower_node(Node):
         # self.get_logger().info(f"Published Switch States: {sw_msg.data}")
 
     def publish_wheels(self, vehicle : da):
-        frontleft_ctrl =  Pose2D()
-        frontright_ctrl = Pose2D()
-        backleft_ctrl =   Pose2D()
-        backright_ctrl =  Pose2D()
+        frontleft_ctrl =  Point()
+        frontright_ctrl = Point()
+        backleft_ctrl =   Point()
+        backright_ctrl =  Point()
         
         frontleft_ctrl.x =  vehicle.v_f_left
-        frontleft_ctrl.theta = vehicle.theta_f_left
+        frontleft_ctrl.z = vehicle.theta_f_left
         frontright_ctrl.x =  vehicle.v_f_right
-        frontright_ctrl.theta = vehicle.theta_f_right
+        frontright_ctrl.z = vehicle.theta_f_right
         backleft_ctrl.x =  vehicle.v_r_left
-        backleft_ctrl.theta = vehicle.theta_r_left
+        backleft_ctrl.z = vehicle.theta_r_left
         backright_ctrl.x =  vehicle.v_r_right
-        backright_ctrl.theta = vehicle.theta_r_right
+        backright_ctrl.z = vehicle.theta_r_right
         
         self.frontleft_pub.publish(frontleft_ctrl)
         self.frontright_pub.publish(frontright_ctrl)
