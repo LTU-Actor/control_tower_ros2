@@ -83,9 +83,9 @@ class DoubleAckermannSteering:
         else:
             # Steering angles
             self.theta_f_right = float(turn_direction * \
-                np.arctan2(self.l, (self.r - self.w / 2)))
-            self.theta_f_left = float(turn_direction * \
                 np.arctan2(self.l, (self.r + self.w / 2)))
+            self.theta_f_left = float(turn_direction * \
+                np.arctan2(self.l, (self.r - self.w / 2)))
             self.theta_r_right = float(-self.theta_f_right)
             self.theta_r_left = float(-self.theta_f_left)
 
@@ -198,7 +198,7 @@ class DoubleAckermannSteering:
 
 # Example Usage
 if __name__ == "__main__":
-    lx = 1500  # Left Stick X-axis input
+    lx = 1000  # Left Stick X-axis input
     ly = 1500  # Left Stick Y-axis input
     vehicle = DoubleAckermannSteering(lx, ly, l=2.5, w=1.5, max_speed=2.0)
     vehicle.display_results()
