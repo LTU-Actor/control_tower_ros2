@@ -40,7 +40,7 @@ class DoubleAckermannSteering:
         - lx ∈ [1000, 2000] → steering angle ∈ [-30°, +30°]
         - ly ∈ [1000, 2000] → velocity ∈ [-max_speed, +max_speed]
         """
-        max_angle_deg = 30 # Maximum steering angle in degrees (don't exceed 50°)
+        max_angle_deg = 45 # Maximum steering angle in degrees (don't exceed 50°)
         max_angle = np.radians(max_angle_deg)
 
         # Map lx to steering angle
