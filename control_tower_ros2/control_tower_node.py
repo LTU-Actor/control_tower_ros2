@@ -8,6 +8,7 @@ from std_msgs.msg import Int32
 from geometry_msgs.msg import Point
 
 from control_tower_ros2.double_ackermann import DoubleAckermannSteering as da
+from control_tower_ros2.fixed_heading import FixedHeadingSteering as fh
 
 
 
@@ -105,7 +106,9 @@ class control_tower_node(Node):
 
         elif self.drive_mode == 1500:
             # Fixed Heading
-            pass
+            vehicle = fh(self.lx, self.ly)
+            self.publish_wheels(vehicle)
+            
         elif self.drive_mode == 1000:
             # edu-bot test mode
             input_range = np.array([1000, 1450, 1550, 2000])
