@@ -9,7 +9,7 @@ from geometry_msgs.msg import Point
 
 from control_tower_ros2.double_ackermann import DoubleAckermannSteering as da
 from control_tower_ros2.fixed_heading import FixedHeadingSteering as fh
-
+from control_tower_ros2.rotate_in_place import RotateSteering as rip
 
 
 class control_tower_node(Node):
@@ -110,23 +110,9 @@ class control_tower_node(Node):
             self.publish_wheels(vehicle)
             
         elif self.drive_mode == 1000:
-            # edu-bot test mode
-            input_range = np.array([1000, 1450, 1550, 2000])
-            linear_output_range = np.array([-10, 0, 0, 10])
-            angular_output_range = np.array([-3.14, 0, 0, 3.14])
-
-            # Map the IBUS data to a Twist message.
-            twist_msg = Twist()
-            twist_msg.linear.x = np.interp(
-                self.ly, input_range, linear_output_range)
-            twist_msg.angular.z = np.interp(
-                self.lx, input_range, angular_output_range)
-
-            # Publish the Twist message
-            self.publisher_.publish(twist_msg)
-
-            # Debuging
-            # self.get_logger().info(f"Published Twist: {twist_msg}")
+            # rotate in place
+            vehicle = rip(self.lx, self.ly)
+            self.publish_wheels(vehicle)
 
         # Publish the Switch state
         sw_msg = Int32MultiArray()
