@@ -57,7 +57,7 @@ class RotateSteering:
         self.str_angle = normalized_lx * max_angle
         
         # Steering angles
-        self.theta_f_right = float(np.arctan2((self.l / 2), (self.w / 2)))
+        self.theta_f_right = float(np.arctan2((self.l / 2), (self.w / 2))) * -1.0
         self.theta_f_left = float(-self.theta_f_right)
         self.theta_r_right = float(-self.theta_f_right)
         self.theta_r_left = float(-self.theta_f_left)
