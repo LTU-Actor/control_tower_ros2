@@ -81,9 +81,15 @@ class control_tower_node(Node):
             return 2
 
     def update_callback(self):
-
+        
+        # High: teleop, Low: auto
+        self.teleop_enable = self.sw_a == 1000
         # 0: double Ackermann, 1: Fixed Heading, 2: edu-bot test mode
         self.drive_mode = self.sw_c
+        
+        if self.teleop_enable:
+            # do auto control
+            return
 
         if self.drive_mode == 2000:
             # Double Ackermann
