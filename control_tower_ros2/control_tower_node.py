@@ -4,7 +4,7 @@ from rclpy.node import Node
 
 from std_msgs.msg import Int32MultiArray
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Int32
+from std_msgs.msg import Int32, String, Bool
 from geometry_msgs.msg import Point
 
 from control_tower_ros2.double_ackermann import DoubleAckermannSteering as da
@@ -60,6 +60,11 @@ class control_tower_node(Node):
         self.backleft_pub =   self.create_publisher(Point, "backleft/control", 10)
         self.backright_pub =  self.create_publisher(Point, "backright/control", 10)
         
+        self.direction_pub = self.create_publisher(Bool, "direction", 10)
+        self.drive_mode_pub = self.create_publisher(String, "drive_mode", 10)
+        self.control_state_pub =  self.create_publisher(String, "control_state", 10)
+        
+        
 
     # Define separate callback functions for each channel
     def callback_1(self, msg): self.rx = msg.data
@@ -87,27 +92,39 @@ class control_tower_node(Node):
         drive = self.sw_c # 1000: ackermann, 1500: fixed heading, 2000: rotate in place
         estop = self.sw_d # 1000: on, 2000: off
         
-        # High: teleop, Low: auto
+        drive_mode_msg = String()
+        control_state_msg = String()
+        direction_msg = Bool()
         
         if estop == 1000:
             return # do nothing
         
-        if mode == 1000: # teleop
+        direction = 1 if direction == 2000 else 0
+        if direction == 0:
+            direction_msg.data = True
+        else:
+            direction_msg.data = False
             
+        self.direction_pub.publish(direction)
+        
+        if mode == 1000: # teleop
+            control_state_msg.data = "teleop"
             if drive == 1000:
                 # Double Ackermann
-                # L: Length (m), W: Width (m), max_speed: max speed (max speed is not used in the current implementation)
-                vehicle = da(self.lx, self.ly)
+                drive_mode_msg.data = "ackermann"
+                vehicle = da(self.lx, self.ly, direction)
                 self.publish_wheels(vehicle)
 
             elif drive == 1500:
                 # Fixed Heading
-                vehicle = fh(self.lx, self.ly)
+                drive_mode_msg.data = "heading"
+                vehicle = fh(self.lx, self.ly, direction)
                 self.publish_wheels(vehicle)
                 
             elif drive == 2000:
                 # rotate in place
-                vehicle = rip(self.lx, self.ly)
+                drive_mode_msg.data = "rotate"
+                vehicle = rip(self.lx, self.ly, direction)
                 self.publish_wheels(vehicle)
 
             # Publish the Switch state
@@ -119,6 +136,16 @@ class control_tower_node(Node):
                 self.map_sw(self.sw_d)
             ]
             self.switch_publisher_.publish(sw_msg)
+            
+        elif mode == 1500:
+            control_state_msg.data = "off"
+            
+        elif mode == 2000:
+            control_state_msg.data = "auto"
+            
+        self.control_state_pub.publish(control_state_msg)
+        self.drive_mode_pub.publish(drive_mode_msg) 
+            
 
     def publish_wheels(self, vehicle : da):
         frontleft_ctrl =  Point()
