@@ -112,19 +112,19 @@ class control_tower_node(Node):
             if drive == 1000:
                 # Double Ackermann
                 drive_mode_msg.data = "ackermann"
-                vehicle = da(self.lx, self.ly, direction)
+                vehicle = da(self.rx, self.ly, direction)
                 self.publish_wheels(vehicle)
 
             elif drive == 1500:
                 # Fixed Heading
                 drive_mode_msg.data = "heading"
-                vehicle = fh(self.lx, self.ly, direction)
+                vehicle = fh(self.rx, self.ly, direction)
                 self.publish_wheels(vehicle)
                 
             elif drive == 2000:
                 # rotate in place
                 drive_mode_msg.data = "rotate"
-                vehicle = rip(self.lx, self.ly, direction)
+                vehicle = rip(self.rx, self.ly, direction)
                 self.publish_wheels(vehicle)
 
             # Publish the Switch state
