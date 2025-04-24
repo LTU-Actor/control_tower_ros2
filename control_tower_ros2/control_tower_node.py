@@ -99,16 +99,19 @@ class control_tower_node(Node):
         if estop == 1000:
             return # do nothing
         
-        direction = 1 if direction == 2000 else 0
-        if direction == 0:
-            direction_msg.data = True
-        else:
-            direction_msg.data = False
-            
-        self.direction_pub.publish(direction)
+        
         
         if mode == 1000: # teleop
             control_state_msg.data = "teleop"
+            
+            direction = 1 if direction == 2000 else 0
+            if direction == 0:
+                direction_msg.data = True
+            else:
+                direction_msg.data = False
+                
+            self.direction_pub.publish(direction_msg)
+            
             if drive == 1000:
                 # Double Ackermann
                 drive_mode_msg.data = "ackermann"
