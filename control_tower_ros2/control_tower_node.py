@@ -81,56 +81,44 @@ class control_tower_node(Node):
             return 2
 
     def update_callback(self):
+    
+        direction = self.sw_a # 1000: forward, 2000: reverse
+        mode = self.sw_b # 1000: teleop, 1500: off, 2000: auto
+        drive = self.sw_c # 1000: ackermann, 1500: fixed heading, 2000: rotate in place
+        estop = self.sw_d # 1000: on, 2000: off
         
         # High: teleop, Low: auto
-        self.teleop_enable = self.sw_a == 1000
-        # 0: double Ackermann, 1: Fixed Heading, 2: edu-bot test mode
-        self.drive_mode = self.sw_c
         
-        if self.teleop_enable:
-            # do auto control
-            return
-
-        if self.drive_mode == 2000:
-            # Double Ackermann
-            # L: Length (m), W: Width (m), max_speed: max speed (max speed is not used in the current implementation)
-            vehicle = da(self.lx, self.ly)
-            self.publish_wheels(vehicle)
-            # TODO: Publish wheel angles/velocities from vehicle object
-            # vehicle.theta_f_left
-            # vehicle.theta_f_right
-            # vehicle.theta_r_left
-            # vehicle.theta_r_right
-            # vehicle.v_f_left
-            # vehicle.v_f_right
-            # vehicle.v_r_left
-            # vehicle.v_r_right
-
-            # Debugging
-            # self.get_logger().info(f"Published Wheel Angles: {vehicle.theta_f_left}, {vehicle.theta_f_right}, {vehicle.theta_r_left}, {vehicle.theta_r_right}")
-            # self.get_logger().info(f"Published Wheel Velocities: {vehicle.v_f_left}, {vehicle.v_f_right}, {vehicle.v_r_left}, {vehicle.v_r_right}")
-
-        elif self.drive_mode == 1500:
-            # Fixed Heading
-            vehicle = fh(self.lx, self.ly)
-            self.publish_wheels(vehicle)
+        if estop == 1000:
+            return # do nothing
+        
+        if mode == 1000: # teleop
             
-        elif self.drive_mode == 1000:
-            # rotate in place
-            vehicle = rip(self.lx, self.ly)
-            self.publish_wheels(vehicle)
+            if drive == 1000:
+                # Double Ackermann
+                # L: Length (m), W: Width (m), max_speed: max speed (max speed is not used in the current implementation)
+                vehicle = da(self.lx, self.ly)
+                self.publish_wheels(vehicle)
 
-        # Publish the Switch state
-        sw_msg = Int32MultiArray()
-        sw_msg.data = [
-            self.map_sw(self.sw_a),
-            self.map_sw(self.sw_b),
-            self.map_sw(self.sw_c),
-            self.map_sw(self.sw_d)
-        ]
-        self.switch_publisher_.publish(sw_msg)
-        # Debugging
-        # self.get_logger().info(f"Published Switch States: {sw_msg.data}")
+            elif drive == 1500:
+                # Fixed Heading
+                vehicle = fh(self.lx, self.ly)
+                self.publish_wheels(vehicle)
+                
+            elif drive == 2000:
+                # rotate in place
+                vehicle = rip(self.lx, self.ly)
+                self.publish_wheels(vehicle)
+
+            # Publish the Switch state
+            sw_msg = Int32MultiArray()
+            sw_msg.data = [
+                self.map_sw(self.sw_a),
+                self.map_sw(self.sw_b),
+                self.map_sw(self.sw_c),
+                self.map_sw(self.sw_d)
+            ]
+            self.switch_publisher_.publish(sw_msg)
 
     def publish_wheels(self, vehicle : da):
         frontleft_ctrl =  Point()

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 class DoubleAckermannSteering:
 
-    def __init__(self, lx, ly, l=0.711, w=0.558, max_speed=2.0):
+    def __init__(self, lx, ly, direction, l=0.711, w=0.558, max_speed=2.0):
         """
         Key Variable Units:
 
@@ -22,6 +22,7 @@ class DoubleAckermannSteering:
         
         self.lx = lx
         self.ly = ly
+        self.direction = direction
         self.l = l
         self.w = w
         self.max_speed = max_speed  # max forward/reverse speed
@@ -51,6 +52,10 @@ class DoubleAckermannSteering:
         # Map ly to velocity
         ly_clamped = np.clip(self.ly, 1000, 2000)
         normalized_ly = (ly_clamped - 1500) / 500.0  # [-1, 1]
+        if self.direction == 0 and normalized_ly < 0:
+            normalized_ly = 0
+        elif self.direction == 1 and normalized_ly > 0:
+            normalized_ly = 0
         self.v = normalized_ly * self.max_speed
 
         # Normalize and clamp lx input
@@ -90,11 +95,11 @@ class DoubleAckermannSteering:
             self.theta_r_left = float(-self.theta_f_left)
 
             # Angular velocity
-            self.omega = self.v / self.r
+            omega = self.v / self.r
 
             # Wheel velocities
-            self.v_f_right = float(self.omega * (self.r - self.w / 2))
-            self.v_f_left = float(self.omega * (self.r + self.w / 2))
+            self.v_f_right = float(omega * (self.r - self.w / 2))
+            self.v_f_left = float(omega * (self.r + self.w / 2))
             self.v_r_right = float(self.v_f_right)
             self.v_r_left = float(self.v_f_left)
 

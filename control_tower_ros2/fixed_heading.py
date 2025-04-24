@@ -2,7 +2,7 @@ import numpy as np
 
 class FixedHeadingSteering:
 
-    def __init__(self, lx, ly, l=0.711, w=0.558, max_speed=2.0):
+    def __init__(self, lx, ly, direction, l=0.711, w=0.558, max_speed=2.0):
         """
         Key Variable Units:
 
@@ -20,6 +20,7 @@ class FixedHeadingSteering:
         
         self.lx = lx
         self.ly = ly
+        self.direction = direction
         self.l = l
         self.w = w
         self.max_speed = max_speed  # max forward/reverse speed
@@ -48,6 +49,10 @@ class FixedHeadingSteering:
         # Map ly to velocity
         ly_clamped = np.clip(self.ly, 1000, 2000)
         normalized_ly = (ly_clamped - 1500) / 500.0  # [-1, 1]
+        if self.direction == 0 and normalized_ly < 0:
+            normalized_ly = 0
+        elif self.direction == 1 and normalized_ly > 0:
+            normalized_ly = 0
         self.v = normalized_ly * self.max_speed
 
 

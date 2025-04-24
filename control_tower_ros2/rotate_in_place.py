@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 class RotateSteering:
 
-    def __init__(self, lx, ly, l=0.711, w=0.558, max_speed=2.0):
+    def __init__(self, lx, ly, direction, l=0.711, w=0.558, max_speed=2.0):
         """
         Key Variable Units:
 
@@ -21,6 +21,7 @@ class RotateSteering:
         
         self.lx = lx
         self.ly = ly
+        self.direction = direction
         self.l = l
         self.w = w
         self.max_speed = max_speed  # max forward/reverse speed
@@ -45,16 +46,12 @@ class RotateSteering:
         # Map lx to steering angle
         lx_clamped = np.clip(self.lx, 1000, 2000)
         normalized_lx = (lx_clamped - 1500) / 500.0  # [-1, 1]
-        self.str_angle = normalized_lx * max_angle
-
-        # Map ly to velocity
-        ly_clamped = np.clip(self.ly, 1000, 2000)
-        normalized_ly = (ly_clamped - 1500) / 500.0  # [-1, 1]
-        self.v = normalized_ly * self.max_speed
-
-
-        # Convert to steering angle in radians
-        self.str_angle = normalized_lx * max_angle
+        if self.direction == 0 and normalized_lx < 0:
+            normalized_lx = 0
+        elif self.direction == 1 and normalized_lx > 0:
+            normalized_lx = 0
+        self.rotate_speed = normalized_lx * self.max_speed
+        
         
         # Steering angles
         self.theta_f_right = float(np.arctan2((self.l / 2), (self.w / 2))) * -1.0
@@ -62,10 +59,10 @@ class RotateSteering:
         self.theta_r_right = float(-self.theta_f_right)
         self.theta_r_left = float(-self.theta_f_left)
         
-        self.v_f_right = self.v
-        self.v_f_left = self.v
-        self.v_r_right = self.v
-        self.v_r_left = self.v
+        self.v_f_right = -self.rotate_speed
+        self.v_f_left = self.rotate_speed
+        self.v_r_right = -self.rotate_speed
+        self.v_r_left = self.rotate_speed
 
     def display_results(self):
         """Prints computed steering angles and wheel velocities"""
