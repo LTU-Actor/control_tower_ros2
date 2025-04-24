@@ -73,9 +73,9 @@ class control_tower_node(Node):
     def callback_4(self, msg): self.lx = msg.data
 
     def callback_5(self, msg): self.sw_a = msg.data
-    def callback_6(self, msg): self.sw_b = msg.data
+    def callback_6(self, msg): self.sw_d = msg.data
     def callback_7(self, msg): self.sw_c = msg.data
-    def callback_8(self, msg): self.sw_d = msg.data
+    def callback_8(self, msg): self.sw_b = msg.data
 
     def map_sw(self, value):
         if value == 1000:
