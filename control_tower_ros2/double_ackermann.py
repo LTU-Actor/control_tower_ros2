@@ -4,110 +4,59 @@ import matplotlib.pyplot as plt
 
 class DoubleAckermannSteering:
 
-    def __init__(self, lx, ly, direction, l=0.711, w=0.558, max_speed=2.0):
-        """
-        Key Variable Units:
+    def __init__(self, velocity, turn_radius, l=0.711, w=0.558):
 
-        - `self.lx`             : Raw lateral (steering) input from iBus (unitless, 1000 - 2000)
-        - `self.ly`             : Raw longitudinal (throttle) input from iBus (unitless, 1000 - 2000)
-        - `self.L`              : Vehicle length (meters, **m**)
-        - `self.W`              : Vehicle width (meters, **m**)
-        - `self.v`              : Vehicle's forward/reverse speed (meters per second, **m/s**)
-        - `self.R`              : Turning radius (meters, **m**)
-        - `self.str_angle`      : Steering angle of the centerline (radians)
-        - `self.omega`          : Angular velocity (radians per second, **rad/s**)
-        - `theta_f_left`, etc.  : Steering angles of each wheel (radians)
-        - `v_f_left`, etc.      : Individual wheel velocities (meters per second, **m/s**)
-        """
-        
-        self.lx = lx
-        self.ly = ly
-        self.direction = direction
+        self.velocity = velocity
+        self.turn_radius = turn_radius
+        # self.direction = direction
         self.l = l
         self.w = w
-        self.max_speed = max_speed  # max forward/reverse speed
-        self.v = 0  # Will be set based on ly and max_speed
-        self.r = float("inf")
-        self.str_angle = 0
         self.compute_steering()
-
-    def omega(self):
-        """Computes angular velocity (0 if moving straight)"""
-        return 0 if self.r == float("inf") else self.v / self.r
 
     def compute_steering(self):
         """
-        Maps:
-        - lx ∈ [1000, 2000] → steering angle ∈ [-30°, +30°]
-        - ly ∈ [1000, 2000] → velocity ∈ [-max_speed, +max_speed]
+        Computes the individual wheel states for the provided velocity and turning radius.
         """
-        max_angle_deg = 45 # Maximum steering angle in degrees (don't exceed 50°)
-        max_angle = np.radians(max_angle_deg)
-
-        # Map lx to steering angle
-        lx_clamped = np.clip(self.lx, 1000, 2000)
-        normalized_lx = (lx_clamped - 1500) / 500.0  # [-1, 1]
-        self.str_angle = normalized_lx * max_angle
-
-        # Map ly to velocity
-        ly_clamped = np.clip(self.ly, 1000, 2000)
-        normalized_ly = (ly_clamped - 1500) / 500.0  # [-1, 1]
-        if self.direction == 0 and normalized_ly < 0:
-            normalized_ly = 0
-        elif self.direction == 1 and normalized_ly > 0:
-            normalized_ly = 0
-        self.v = normalized_ly * self.max_speed
-
-        # Normalize and clamp lx input
-        lx_clamped = np.clip(self.lx, 1000, 2000)
-
-        # Map to range [-1, 1]
-        normalized = (lx_clamped - 1500) / 500.0
-
-        # Convert to steering angle in radians
-        self.str_angle = normalized * max_angle
-
-        # Compute turning radius or straight line
-        if np.isclose(self.str_angle, 0, atol=np.radians(1)):
-            self.r = float("inf")
-        else:
-            self.r = abs(self.l / np.tan(self.str_angle))
-
-        turn_direction = np.sign(self.str_angle)
 
         # Straight-line motion
-        if self.r == float("inf"):
+        if self.turn_radius == float("inf"):
             self.theta_f_right = 0
             self.theta_f_left = 0
             self.theta_r_right = 0
             self.theta_r_left = 0
-            self.v_f_right = self.v
-            self.v_f_left = self.v
-            self.v_r_right = self.v
-            self.v_r_left = self.v
+            self.v_f_right = self.velocity
+            self.v_f_left = self.velocity
+            self.v_r_right = self.velocity
+            self.v_r_left = self.velocity
         else:
+            if self.turn_radius < 0:
+                turn_direction = -1
+                self.turn_radius *= -1
+            else:
+                turn_direction = 1
+
             # Steering angles
-            self.theta_f_right = float(turn_direction * \
-                np.arctan2(self.l, (self.r + self.w / 2)))
-            self.theta_f_left = float(turn_direction * \
-                np.arctan2(self.l, (self.r - self.w / 2)))
+            self.theta_f_right = float(turn_direction *
+                                       np.arctan2(self.l / 2, (self.turn_radius + (turn_direction * -1 * self.w / 2))))
+            self.theta_f_left = float(turn_direction *
+                                      np.arctan2(self.l / 2, (self.turn_radius + (turn_direction * self.w / 2))))
             self.theta_r_right = float(-self.theta_f_right)
             self.theta_r_left = float(-self.theta_f_left)
 
             # Angular velocity
-            omega = self.v / self.r
+            omega = self.velocity / self.turn_radius
 
             # Wheel velocities
-            self.v_f_right = float(omega * (self.r - self.w / 2))
-            self.v_f_left = float(omega * (self.r + self.w / 2))
+            self.v_f_right = float(omega * (self.turn_radius - self.w / 2))
+            self.v_f_left = float(omega * (self.turn_radius + self.w / 2))
             self.v_r_right = float(self.v_f_right)
             self.v_r_left = float(self.v_f_left)
 
     def display_results(self):
         """Prints computed steering angles and wheel velocities"""
         print("Double Ackermann Steering Visualization:")
-        print(f"Turning Angle R: {self.r}")
-        print(f"Directional Angle in radians: {self.str_angle}")
+        print(f"Turning Angle R: {self.turn_radius}")
+        # print(f"Directional Angle in radians: {self.str_angle}")
         print(
             f"Front right Wheel Angle: {self.theta_f_right:.2f}° | Velocity: {self.v_f_right:.2f} m/s")
         print(
@@ -203,8 +152,6 @@ class DoubleAckermannSteering:
 
 # Example Usage
 if __name__ == "__main__":
-    lx = 1000  # Left Stick X-axis input
-    ly = 1500  # Left Stick Y-axis input
-    vehicle = DoubleAckermannSteering(lx, ly, l=2.5, w=1.5, max_speed=2.0)
+    vehicle = DoubleAckermannSteering(2, 2, l=2.5, w=1.5)
     vehicle.display_results()
     vehicle.visualize()

@@ -11,9 +11,13 @@ from control_tower_ros2.double_ackermann import DoubleAckermannSteering as da
 from control_tower_ros2.fixed_heading import FixedHeadingSteering as fh
 from control_tower_ros2.rotate_in_place import RotateSteering as rip
 
+MAX_VELOCITY = 2.0  # maximum velocity, in m/s
+MIN_TURN_RADIUS = 3.0  # minimum ackermann turning radius, in m
+MAX_WHEEL_ANGLE = 95  # maximum wheel angle, in degrees
+
 
 class control_tower_node(Node):
-    
+
     def __init__(self):
         super().__init__('control_tower_node')
         # Create a publisher for the Twist message on the 'cmd_vel' topic.
@@ -54,19 +58,23 @@ class control_tower_node(Node):
             Int32, 'ch7', self.callback_7, 1)
         self.sub_ch8 = self.create_subscription(
             Int32, 'ch8', self.callback_8, 1)
-        
-        self.frontleft_pub =  self.create_publisher(Point, "frontleft/control", 10)
-        self.frontright_pub = self.create_publisher(Point, "frontright/control", 10)
-        self.backleft_pub =   self.create_publisher(Point, "backleft/control", 10)
-        self.backright_pub =  self.create_publisher(Point, "backright/control", 10)
-        
+
+        self.frontleft_pub = self.create_publisher(
+            Point, "frontleft/control", 10)
+        self.frontright_pub = self.create_publisher(
+            Point, "frontright/control", 10)
+        self.backleft_pub = self.create_publisher(
+            Point, "backleft/control", 10)
+        self.backright_pub = self.create_publisher(
+            Point, "backright/control", 10)
+
         self.direction_pub = self.create_publisher(Bool, "direction", 10)
         self.drive_mode_pub = self.create_publisher(String, "drive_mode", 10)
-        self.control_state_pub =  self.create_publisher(String, "control_state", 10)
-        
-        
+        self.control_state_pub = self.create_publisher(
+            String, "control_state", 10)
 
     # Define separate callback functions for each channel
+
     def callback_1(self, msg): self.rx = msg.data
     def callback_2(self, msg): self.ly = msg.data
     def callback_3(self, msg): self.ry = msg.data
@@ -86,48 +94,57 @@ class control_tower_node(Node):
             return 2
 
     def update_callback(self):
-    
-        direction = self.sw_a # 1000: forward, 2000: reverse
-        mode = self.sw_b # 1000: teleop, 1500: off, 2000: auto
-        drive = self.sw_c # 1000: ackermann, 1500: fixed heading, 2000: rotate in place
-        estop = self.sw_d # 1000: on, 2000: off
-        
+
+        direction = self.sw_a  # 1000: forward, 2000: reverse
+        mode = self.sw_b  # 1000: teleop, 1500: off, 2000: auto
+        drive = self.sw_c  # 1000: ackermann, 1500: fixed heading, 2000: rotate in place
+        estop = self.sw_d  # 1000: on, 2000: off
+
         drive_mode_msg = String()
         control_state_msg = String()
         direction_msg = Bool()
-        
+
         if estop == 1000:
-            return # do nothing
-        
-        
-        
-        if mode == 1000: # teleop
+            return  # do nothing
+
+        if mode == 1000:  # teleop
             control_state_msg.data = "teleop"
-            
+
             direction = 1 if direction == 2000 else 0
             if direction == 0:
                 direction_msg.data = True
             else:
                 direction_msg.data = False
-                
+
             self.direction_pub.publish(direction_msg)
-            
+
+            rx_clamped = np.clip(self.rx, 1000, 2000)
+            normalized_rx = (rx_clamped - 1500) / 500.0  # [-1, 1]
+            ly_clamped = np.clip(self.ly, 1000, 2000)
+            normalized_ly = (ly_clamped - 1500) / 500.0  # [-1, 1]
+
             if drive == 1000:
                 # Double Ackermann
+                velocity = normalized_ly * MAX_VELOCITY
+                turning_radius = float("inf") if normalized_rx == 0 else max(
+                    0.711 / np.tan(normalized_rx), MIN_TURN_RADIUS)
                 drive_mode_msg.data = "ackermann"
-                vehicle = da(self.rx, self.ly, direction)
+                vehicle = da(velocity, turning_radius)
                 self.publish_wheels(vehicle)
 
             elif drive == 1500:
                 # Fixed Heading
+                velocity = normalized_ly * MAX_VELOCITY
+                angle = normalized_rx * MAX_WHEEL_ANGLE
                 drive_mode_msg.data = "heading"
-                vehicle = fh(self.rx, self.ly, direction)
+                vehicle = fh(velocity, angle)
                 self.publish_wheels(vehicle)
-                
+
             elif drive == 2000:
                 # rotate in place
                 drive_mode_msg.data = "rotate"
-                vehicle = rip(self.rx, self.ly, direction)
+                rotate_velocity = normalized_rx * MAX_VELOCITY
+                vehicle = rip(rotate_velocity)
                 self.publish_wheels(vehicle)
 
             # Publish the Switch state
@@ -139,40 +156,36 @@ class control_tower_node(Node):
                 self.map_sw(self.sw_d)
             ]
             self.switch_publisher_.publish(sw_msg)
-            
+
         elif mode == 1500:
             control_state_msg.data = "off"
-            
+
         elif mode == 2000:
             control_state_msg.data = "auto"
-            
-        self.control_state_pub.publish(control_state_msg)
-        self.drive_mode_pub.publish(drive_mode_msg) 
-            
 
-    def publish_wheels(self, vehicle : da):
-        frontleft_ctrl =  Point()
+        self.control_state_pub.publish(control_state_msg)
+        self.drive_mode_pub.publish(drive_mode_msg)
+
+    def publish_wheels(self, vehicle: da):
+        frontleft_ctrl = Point()
         frontright_ctrl = Point()
-        backleft_ctrl =   Point()
-        backright_ctrl =  Point()
-        
-        frontleft_ctrl.x =  vehicle.v_f_left      * 1.0
+        backleft_ctrl = Point()
+        backright_ctrl = Point()
+
+        frontleft_ctrl.x = vehicle.v_f_left * 1.0
         frontleft_ctrl.z = vehicle.theta_f_left * 1.0
-        frontright_ctrl.x =  vehicle.v_f_right * 1.0
+        frontright_ctrl.x = vehicle.v_f_right * 1.0
         frontright_ctrl.z = vehicle.theta_f_right * 1.0
-        backleft_ctrl.x =  vehicle.v_r_left * 1.0
+        backleft_ctrl.x = vehicle.v_r_left * 1.0
         backleft_ctrl.z = vehicle.theta_r_left * 1.0
-        backright_ctrl.x =  vehicle.v_r_right * 1.0
+        backright_ctrl.x = vehicle.v_r_right * 1.0
         backright_ctrl.z = vehicle.theta_r_right * 1.0
-        
+
         self.frontleft_pub.publish(frontleft_ctrl)
         self.frontright_pub.publish(frontright_ctrl)
         self.backleft_pub.publish(backleft_ctrl)
         self.backright_pub.publish(backright_ctrl)
-        
-        
-            
-            
+
 
 def main(args=None):
     rclpy.init(args=args)
