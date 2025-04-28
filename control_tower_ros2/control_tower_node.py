@@ -127,7 +127,7 @@ class control_tower_node(Node):
             if drive == 1000:
                 # Double Ackermann
                 velocity = normalized_ly * MAX_VELOCITY
-                str_angle = normalized_rx * MAX_ACKERMANN_ANGLE
+                str_angle = normalized_rx * np.radians(MAX_ACKERMANN_ANGLE)
                 turning_radius = float("inf") if normalized_rx == 0 else abs(0.711 / np.tan(str_angle))
                 turning_radius *= (str_angle / abs(str_angle))
                 drive_mode_msg.data = "ackermann"
