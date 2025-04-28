@@ -140,7 +140,7 @@ class control_tower_node(Node):
             elif drive == 1500:
                 # Fixed Heading
                 velocity = normalized_ly * MAX_VELOCITY
-                angle = normalized_rx * MAX_WHEEL_ANGLE
+                angle = normalized_rx * np.radians(MAX_WHEEL_ANGLE)
                 drive_mode_msg.data = "heading"
                 vehicle = fh(velocity, angle)
                 self.publish_wheels(vehicle)
