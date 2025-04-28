@@ -128,8 +128,11 @@ class control_tower_node(Node):
                 # Double Ackermann
                 velocity = normalized_ly * MAX_VELOCITY
                 str_angle = normalized_rx * np.radians(MAX_ACKERMANN_ANGLE)
-                turning_radius = float("inf") if normalized_rx == 0 else abs(0.711 / np.tan(str_angle))
-                turning_radius *= (str_angle / abs(str_angle))
+                if normalized_rx == 0:
+                    turning_radius = 0
+                else:
+                    turning_radius = float("inf") if normalized_rx == 0 else abs(0.711 / np.tan(str_angle))
+                    turning_radius *= (str_angle / abs(str_angle))
                 drive_mode_msg.data = "ackermann"
                 vehicle = da(velocity, turning_radius)
                 self.publish_wheels(vehicle)
