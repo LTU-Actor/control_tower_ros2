@@ -142,6 +142,8 @@ class control_tower_node(Node):
             elif drive == 1500:
                 # Fixed Heading
                 velocity = normalized_ly * MAX_VELOCITY
+                if (not direction and velocity < 0) or direction and velocity > 0:
+                    velocity = 0
                 angle = normalized_rx * np.radians(MAX_WHEEL_ANGLE)
                 drive_mode_msg.data = "heading"
                 vehicle = fh(velocity, angle)
@@ -151,6 +153,8 @@ class control_tower_node(Node):
                 # rotate in place
                 drive_mode_msg.data = "rotate"
                 rotate_velocity = normalized_rx * MAX_VELOCITY
+                if (not direction and rotate_velocity < 0) or direction and rotate_velocity > 0:
+                    velocity = 0
                 vehicle = rip(rotate_velocity)
                 self.publish_wheels(vehicle)
 
