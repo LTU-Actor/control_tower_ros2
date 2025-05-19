@@ -154,7 +154,7 @@ class control_tower_node(Node):
                 drive_mode_msg.data = "rotate"
                 rotate_velocity = normalized_rx * MAX_VELOCITY
                 if (not direction and rotate_velocity < 0) or direction and rotate_velocity > 0:
-                    velocity = 0
+                    rotate_velocity = 0
                 vehicle = rip(rotate_velocity)
                 self.publish_wheels(vehicle)
 
