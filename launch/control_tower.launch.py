@@ -12,14 +12,14 @@ def generate_launch_description():
     control_tower_node = Node(
             package='control_tower_ros2',
             executable='control_tower_node',
-            namespace="/",
+            # namespace="/",
             name='control_tower_node',
         )
     
     ibus_node = Node(
             package='ibus_reader',
             executable='ibus_reader',
-            namespace="/",
+            # namespace="/",
             name='ibus_reader',
             parameters=[
                 {'ibus_channel': LaunchConfiguration("ibus_channel")}
