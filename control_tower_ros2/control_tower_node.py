@@ -212,7 +212,6 @@ class control_tower_node(Node):
                     if (not self.direction and rotate_velocity < 0) or self.direction and rotate_velocity > 0:
                         rotate_velocity = 0
                     vehicle = rip(rotate_velocity)
-                self.last_cmd_vel = None
                     
 
         control_state_msg = String()
