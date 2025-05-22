@@ -211,7 +211,7 @@ class control_tower_node(Node):
         self.control_state_pub.publish(control_state_msg)
         
         direction_msg = Bool()
-        direction_msg.data = self.direction
+        direction_msg.data = not self.direction
         self.direction_pub.publish(direction_msg)
         
         if(vehicle):
