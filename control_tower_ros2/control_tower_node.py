@@ -44,12 +44,13 @@ class control_tower_node(Node):
         self.last_cmd_vel : Twist = None
 
         # Create subscriptions
-        self.create_subscription(Bool, "auto_direction", self.direction_cb, 1)
-        self.create_subscription(String, "drive_mode", self.drive_mode_cb, 1)
+        self.create_subscription(Bool, "set_direction", self.direction_cb, 1)
+        self.create_subscription(String, "set_drive_mode", self.drive_mode_cb, 1)
         self.create_subscription(Twist, "cmd_vel", self.cmd_vel_cb, 1)
         
         self.control_state_pub = self.create_publisher(
             String, "control_state", 10)
+        self.drive_mode_pub = self.create_publisher(String, "drive_mode", 10)
         self.direction_pub = self.create_publisher(Bool, "direction", 10)
 
 
@@ -209,6 +210,10 @@ class control_tower_node(Node):
         control_state_msg = String()
         control_state_msg.data = self.control_state
         self.control_state_pub.publish(control_state_msg)
+        
+        drive_mode_msg = String()
+        drive_mode_msg.data = self.drive_mode
+        self.drive_mode_pub.publish(drive_mode_msg)
         
         direction_msg = Bool()
         direction_msg.data = not self.direction
