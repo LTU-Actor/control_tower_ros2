@@ -44,9 +44,14 @@ class control_tower_node(Node):
         self.last_cmd_vel : Twist = None
 
         # Create subscriptions
-        self.create_subscription(Bool, "direction", self.direction_cb, 1)
+        self.create_subscription(Bool, "auto_direction", self.direction_cb, 1)
         self.create_subscription(String, "drive_mode", self.drive_mode_cb, 1)
         self.create_subscription(Twist, "cmd_vel", self.cmd_vel_cb, 1)
+        
+        self.control_state_pub = self.create_publisher(
+            String, "control_state", 10)
+        self.direction_pub = self.create_publisher(Bool, "direction", 10)
+
 
 
         self.sub_ch1 = self.create_subscription(
@@ -77,9 +82,7 @@ class control_tower_node(Node):
             Point, "backright/control", 10)
 
         self.direction_pub = self.create_publisher(Bool, "direction", 10)
-        self.drive_mode_pub = self.create_publisher(String, "drive_mode", 10)
-        self.control_state_pub = self.create_publisher(
-            String, "control_state", 10)
+        
 
     # Define separate callback functions for each channel
 
@@ -116,6 +119,7 @@ class control_tower_node(Node):
 
         mode = self.sw_b  # 1000: teleop, 1500: off, 2000: auto
         estop = self.sw_d  # 1000: on, 2000: off
+        vehicle = None
 
         if estop == 1000:
             return  # do nothing
@@ -123,7 +127,7 @@ class control_tower_node(Node):
         if mode == 1000:  # teleop
             self.control_state = "teleop"
 
-            self.direction = 1 if self.sw_a == 2000 else 0
+            self.direction = self.sw_a == 2000
 
             if self.sw_c == 1000:
                 self.drive_mode = "ackermann"
@@ -149,7 +153,7 @@ class control_tower_node(Node):
                     turning_radius = abs(0.711 / np.tan(str_angle))
                     turning_radius *= (str_angle / abs(str_angle))
                 vehicle = da(velocity, turning_radius)
-                self.publish_wheels(vehicle)
+                
 
             elif self.drive_mode == "heading":
                 # Fixed Heading
@@ -158,7 +162,7 @@ class control_tower_node(Node):
                     velocity = 0
                 angle = normalized_rx * np.radians(MAX_WHEEL_ANGLE)
                 vehicle = fh(velocity, angle)
-                self.publish_wheels(vehicle)
+                
 
             elif self.drive_mode == "rotate":
                 # rotate in place
@@ -166,7 +170,7 @@ class control_tower_node(Node):
                 if (not self.direction and rotate_velocity < 0) or self.direction and rotate_velocity > 0:
                     rotate_velocity = 0
                 vehicle = rip(rotate_velocity)
-                self.publish_wheels(vehicle)
+                
 
         elif mode == 1500:
             self.control_state = "off"
@@ -185,7 +189,7 @@ class control_tower_node(Node):
                         turning_radius = abs(0.711 / np.tan(str_angle))
                         turning_radius *= (str_angle / abs(str_angle))
                     vehicle = da(velocity, turning_radius)
-                    self.publish_wheels(vehicle)
+                    
 
                 elif self.drive_mode == "heading":
                     velocity = max(min(self.last_cmd_vel.linear.x, MAX_VELOCITY), -1 * MAX_VELOCITY)
@@ -193,18 +197,25 @@ class control_tower_node(Node):
                         velocity = 0
                     angle = max(min(self.last_cmd_vel.angular.z, np.radians(MAX_WHEEL_ANGLE)), -1 * np.radians(MAX_WHEEL_ANGLE))
                     vehicle = fh(velocity, angle)
-                    self.publish_wheels(vehicle)
+                    
 
                 elif self.drive_mode == "rotate":
                     rotate_velocity = max(min(self.last_cmd_vel.angular.z, MAX_VELOCITY), -1 * MAX_VELOCITY)
                     if (not self.direction and rotate_velocity < 0) or self.direction and rotate_velocity > 0:
                         rotate_velocity = 0
                     vehicle = rip(rotate_velocity)
-                    self.publish_wheels(vehicle)
+                    
 
         control_state_msg = String()
         control_state_msg.data = self.control_state
         self.control_state_pub.publish(control_state_msg)
+        
+        direction_msg = Bool()
+        direction_msg.data = self.direction
+        self.direction_pub.publish(direction_msg)
+        
+        if(vehicle):
+            self.publish_wheels(vehicle)
 
     def publish_wheels(self, vehicle: da):
         frontleft_ctrl = Point()
