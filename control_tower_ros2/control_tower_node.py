@@ -16,6 +16,7 @@ MAX_ACKERMANN_ANGLE = 45
 # MIN_TURN_RADIUS = 3.0  # minimum ackermann turning radius, in m
 MAX_WHEEL_ANGLE = 95  # maximum wheel angle, in degrees
 CMD_VEL_TIMEOUT_MS = 50
+DIRECTION_CHANGE_BRAKE_DURATION_MS = 500
 
 
 class control_tower_node(Node):
@@ -44,6 +45,7 @@ class control_tower_node(Node):
         self.drive_mode = "ackermann"
         self.last_cmd_vel : Twist = None
         self.last_cmd_vel_time = 0.0
+        self.brake_time = 0.0
 
         # Create subscriptions
         # self.create_subscription(Bool, "set_direction", self.direction_cb, 1)
@@ -185,10 +187,18 @@ class control_tower_node(Node):
 
         elif mode == 2000:
             self.control_state = "auto"
+            
+            if self.brake_time > (self.get_clock().now().nanoseconds / 1e6):
+                return
+            
             if self.last_cmd_vel:
-                
                 if self.drive_mode == "ackermann":
-                    self.direction = self.last_cmd_vel.linear.x < 0
+                    requested_direction = self.last_cmd_vel.linear.x < 0
+                    if requested_direction != self.direction:
+                        self.brake_time = (self.get_clock().now().nanoseconds / 1e6) + DIRECTION_CHANGE_BRAKE_DURATION_MS
+                        self.direction = requested_direction
+                        return
+                    
                     velocity = max(min(self.last_cmd_vel.linear.x, MAX_VELOCITY), -1 * MAX_VELOCITY)
                     if (not self.direction and velocity < 0) or self.direction and velocity > 0:
                         velocity = 0
