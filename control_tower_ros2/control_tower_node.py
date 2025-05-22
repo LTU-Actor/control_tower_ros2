@@ -15,6 +15,7 @@ MAX_VELOCITY = 2.0  # maximum velocity, in m/s
 MAX_ACKERMANN_ANGLE = 45
 # MIN_TURN_RADIUS = 3.0  # minimum ackermann turning radius, in m
 MAX_WHEEL_ANGLE = 95  # maximum wheel angle, in degrees
+CMD_VEL_TIMEOUT_MS = 50
 
 
 class control_tower_node(Node):
@@ -42,6 +43,7 @@ class control_tower_node(Node):
         self.control_state = "off"
         self.drive_mode = "ackermann"
         self.last_cmd_vel : Twist = None
+        self.last_cmd_vel_time = 0.0
 
         # Create subscriptions
         self.create_subscription(Bool, "set_direction", self.direction_cb, 1)
@@ -109,9 +111,10 @@ class control_tower_node(Node):
             else:
                 self.get_logger().warn(f"Got invalid driving mode: {mode}")
 
-    def cmd_vel_cb(self, msg):
+    def cmd_vel_cb(self, msg : Twist):
         if self.control_state == "auto":
             self.last_cmd_vel = msg
+            self.last_cmd_vel_time = self.get_clock().now().nanoseconds / 1e6
         else:
             self.last_cmd_vel = None
 
@@ -121,6 +124,10 @@ class control_tower_node(Node):
         mode = self.sw_b  # 1000: teleop, 1500: off, 2000: auto
         estop = self.sw_d  # 1000: on, 2000: off
         vehicle = None
+        
+        if (self.get_clock().now().nanoseconds / 1e6) - self.last_cmd_vel_time > CMD_VEL_TIMEOUT_MS:
+            self.last_cmd_vel = None
+        
 
         if estop == 1000:
             return  # do nothing
