@@ -7,7 +7,7 @@ class DoubleAckermannSteering:
     def __init__(self, velocity, turn_radius, l=0.711, w=0.558):
 
         self.velocity = velocity
-        self.turn_radius = turn_radius
+        self.turn_radius = turn_radius * -1.0
         # self.direction = direction
         self.l = l
         self.w = w
