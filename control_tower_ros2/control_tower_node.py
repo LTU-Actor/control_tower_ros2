@@ -202,7 +202,7 @@ class control_tower_node(Node):
                     velocity = max(min(self.last_cmd_vel.linear.x, MAX_VELOCITY), -1 * MAX_VELOCITY)
                     if (not self.direction and velocity < 0) or self.direction and velocity > 0:
                         velocity = 0
-                    str_angle = max(min(self.last_cmd_vel.angular.z, np.radians(MAX_ACKERMANN_ANGLE)), -1 * np.radians(MAX_ACKERMANN_ANGLE))
+                    str_angle = max(min(self.last_cmd_vel.angular.z, np.radians(MAX_ACKERMANN_ANGLE)), -1 * np.radians(MAX_ACKERMANN_ANGLE)) * -1
                     if str_angle == 0:
                         turning_radius = float("inf")
                     else:
@@ -216,7 +216,7 @@ class control_tower_node(Node):
                     velocity = max(min(self.last_cmd_vel.linear.x, MAX_VELOCITY), -1 * MAX_VELOCITY)
                     if (not self.direction and velocity < 0) or self.direction and velocity > 0:
                         velocity = 0
-                    angle = max(min(self.last_cmd_vel.angular.z, np.radians(MAX_WHEEL_ANGLE)), -1 * np.radians(MAX_WHEEL_ANGLE))
+                    angle = max(min(self.last_cmd_vel.angular.z, np.radians(MAX_WHEEL_ANGLE)), -1 * np.radians(MAX_WHEEL_ANGLE)) * -1
                     vehicle = fh(velocity, angle)
                     
 
