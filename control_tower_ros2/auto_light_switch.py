@@ -17,29 +17,27 @@ class LightSwitch(Node):
         super().__init__("auto_light_switch")
         self.create_subscription(String, "control_state", self.control_state_cb, 1)
         
-        self.gpio_request = gpiod.request_lines("/dev/gpiochip0", 
+        self.gpio_request = gpiod.request_lines("/dev/gpiochip4", 
                                                 consumer="auto_light_switch", 
                                                 config={
                                                     AUTO_GPIO_PIN: gpiod.LineSettings(direction=Direction.OUTPUT, output_value=Value.INACTIVE),
                                                     OTHER_GPIO_PIN: gpiod.LineSettings(direction=Direction.OUTPUT, output_value=Value.INACTIVE),
                                                 })
         
-        self.do_lights()
+        self.timer = self.create_timer(0.1, self.do_lights)
         
         
     def control_state_cb(self, msg : String):
         self.control_state = msg.data
         
     def do_lights(self):
-        rate = self.create_rate(10)
-        while rclpy.ok():
-            if self.control_state == "auto":
-                self.gpio_request.set_value(AUTO_GPIO_PIN, Value.ACTIVE)
-                self.gpio_request.set_value(OTHER_GPIO_PIN, Value.INACTIVE)
-            else:
-                self.gpio_request.set_value(AUTO_GPIO_PIN, Value.INACTIVE)
-                self.gpio_request.set_value(OTHER_GPIO_PIN, Value.ACTIVE)
-            rate.sleep()
+        if self.control_state == "auto":
+            self.gpio_request.set_value(AUTO_GPIO_PIN, Value.ACTIVE)
+            self.gpio_request.set_value(OTHER_GPIO_PIN, Value.INACTIVE)
+        else:
+            self.gpio_request.set_value(AUTO_GPIO_PIN, Value.INACTIVE)
+            self.gpio_request.set_value(OTHER_GPIO_PIN, Value.ACTIVE)
+
             
             
 def main(args=None):
