@@ -5,8 +5,8 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
-AUTO_GPIO_PIN = 26
-OTHER_GPIO_PIN = 19
+AUTO_GPIO_PIN = 20
+OTHER_GPIO_PIN = 21
 
 
 class LightSwitch(Node):
