@@ -21,7 +21,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-             f'control_tower_node = {package_name}.control_tower_node:main'
+             f'control_tower_node = {package_name}.control_tower_node:main',
+             f'auto_light_switch = {package_name}.auto_light_switch:main',
         ],
     },
 )

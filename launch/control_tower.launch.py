@@ -26,10 +26,18 @@ def generate_launch_description():
             ]
         )
     
+    light_switch = Node(
+            package='control_tower_ros2',
+            executable='auto_light_switch',
+            # namespace="/",
+            name='auto_light_switch',
+        )
+    
     
     
     return LaunchDescription([
         ibus_channel_arg,
         control_tower_node,
         ibus_node,
+        light_switch,
     ])
