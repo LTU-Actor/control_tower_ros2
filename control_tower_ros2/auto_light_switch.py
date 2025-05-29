@@ -37,6 +37,7 @@ class LightSwitch(Node):
         else:
             self.gpio_request.set_value(AUTO_GPIO_PIN, Value.INACTIVE)
             self.gpio_request.set_value(OTHER_GPIO_PIN, Value.ACTIVE)
+        self.control_state = ""
 
             
             
